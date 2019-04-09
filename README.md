@@ -76,3 +76,42 @@ The survey microservice is a Limesurvey fork which is used to create surveys whi
 ### Desktop Application
 
 The backoffice desktop application is a portable electron application used to access the survey microservice. It carries a shared client secret which alongside a username and a password prevents anyone outside the study from accessing participant data.
+
+## Building
+
+### Prerequisites
+
+Xcode is used for building the iOS application. [CocoaPods](https://cocoapods.org/) is used for dependency management.
+
+[Docker](https://www.docker.com/get-started) and [docker-compose](https://docs.docker.com/compose/install/) is needed to build and deploy locally. [Docker-machine](https://docs.docker.com/machine/install-machine/) and Docker Stack is used to deploy to the staging server.
+
+[Node 8](https://nodejs.org), and [OpenJDK 8](https://openjdk.java.net/install/) is used in development of the individual services. You should have Node 8 and a recent JDK installed locally. [nvm](https://github.com/creationix/nvm) is recommended for maintaining multiple versions of node locally.
+
+[IntelliJ IDEA](https://www.jetbrains.com/idea/) has been used for development of microservices implemented in Kotlin and [Atom](https://atom.io/) has been used for microservices implemented in Typescript, but any IDE can be used for local development.
+
+GPG is used for managing secrets.
+
+### Submodules
+
+Git submodules are used for maintaining dependencies. To pull all dependencies (if you did not perform a recursive clone) run:
+
+```
+git submodule update --init --recursive
+```
+
+### Decrypting secrets
+
+Before starting the stack for the first time, secrets must be decrypted. To decrypt the secrets, run:
+
+```
+gpg --decrypt-files --yes `find . -path '*secrets*' -and -name '*.gpg'`
+```
+
+
+### Local deployment
+
+To build and run the backend services locally, simply clone the services project including all submodules and run:
+
+```
+docker-compose up
+```
