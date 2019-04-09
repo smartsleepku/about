@@ -46,6 +46,8 @@ The backend is composed of multiple sub-components.
  - [Notification](https://github.com/smartsleep/notify) service
  - [Survey](https://github.com/smartsleep/limesurvey) service
  - [Authenticating](https://github.com/smartsleep/proxy) proxy
+ 
+![Server layout](https://github.com/smartsleep/about/raw/master/smartsleep-server-layout.png "Server layout")
 
 #### Authentication Proxy
 
