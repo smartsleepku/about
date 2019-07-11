@@ -85,6 +85,8 @@ The backoffice desktop application is a portable electron application used to ac
 
 Xcode is used for building the iOS application. [CocoaPods](https://cocoapods.org/) is used for dependency management.
 
+[Android Studio](https://developer.android.com/studio) was used for building the Android application.
+
 [Docker](https://www.docker.com/get-started) and [docker-compose](https://docs.docker.com/compose/install/) is needed to build and deploy locally. [Docker-machine](https://docs.docker.com/machine/install-machine/) and Docker Stack is used to deploy to the staging server.
 
 [Node 8](https://nodejs.org), and [OpenJDK 8](https://openjdk.java.net/install/) is used in development of the individual services. You should have Node 8 and a recent JDK installed locally. [nvm](https://github.com/creationix/nvm) is recommended for maintaining multiple versions of node locally.
