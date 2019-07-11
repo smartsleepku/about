@@ -8,7 +8,7 @@ The project is composed of multiple parts:
 
  - Mobile applications
    - [iOS](https://github.com/smartsleep/ios) application
-   - Android application (TBD)
+   - [Android](https://github.com/smartsleep/android) application
  - Backend
    - [Authentication](https://github.com/smartsleep/auth) module
    - [Activity](https://github.com/smartsleep/activity) data service
