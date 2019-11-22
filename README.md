@@ -126,8 +126,8 @@ Install docker, docker-compose.
 
 Clone repositories:
 ```
-git clone git@github.com:smartsleep/services.git
-git clone git@github.com:smartsleep/android.git
+git clone git@github.com:smartsleepku/services.git
+git clone git@github.com:smartsleepku/android.git
 cd services
 git submodule update --init --recursive
 git submodule update --remote
@@ -181,7 +181,6 @@ val CLIENT_SECRET = "jiejov6ohn3iexiig5EifiLaiyai5eizoo4avaeQueesohqu5Iezohg7ooy
 val ADMIN_CREDENTIALS = "Eiphuthe4saiPiu7imoweitaek5caey9ohhohN0uh9aegh5pot7Uer2aeToXie2u"
 
 fun configure() {
-    //FuelManager.instance.basePath = "https://apismartsleep.sund.ku.dk"
     FuelManager.instance.basePath = "http://10.0.2.2:18080"
 }
 ```
@@ -213,3 +212,180 @@ When you update one of the submodules, or docker-compose file, run the following
 git submodule update --remote
 docker-compose build
 ```
+
+# Deploying to a staging server
+
+## Prepare repositories
+
+First, clone and checkout backend repositories on the server:
+```
+git clone git@github.com:smartsleepku/services.git
+cd services
+git submodule update --init --recursive
+```
+
+### Configure activity
+Create and edit the following file:
+```
+activity/secrets/database-production.properties
+```
+You can use the following file as a template:
+```
+activity/secrets/database-production.properties.sample
+```
+
+### Configure auth
+Create and edit the following files:
+```
+auth/.env
+auth/config/production.json
+```
+You can use the following files as templates:
+```
+auth/.env.sample
+auth/config/production.json.sample
+```
+
+### Configure survey
+Create the following file:
+```
+secrets/config-production.php
+```
+You can use the following file as a template:
+```
+secrets/config-production.php.sample
+```
+
+### Configure firebase
+Download firebase admin sdk configuration from firebase dashboard:
+```
+secrets/firebase-adminsdk.json
+```
+
+## Set up server
+Run the following commands from the services directory:
+```
+docker swarm init # initialize the computer as swarm control node
+docker node ls # check that it worked
+docker-compose -f docker-compose.staging-new.yml build # this rebuilds local docker images
+docker stack deploy -c docker-compose.staging-new.yml smartsleep # this starts all services
+docker service ls # see that services are running
+```
+
+You can use the following commands to check services:
+```
+docker service ps <service> # check particular service
+docker logs <service> # check service logs (you can use autocompletion)
+```
+
+To stop services, run:
+```
+docker stack rm smartsleep
+```
+
+Now, when you started services for the first time, you need to fill database with keys to be able to test:
+```
+docker exec -it smartsleep_db.1.<press tab to autocomplete> bash
+mongo mongodb://root:oJuwu7Tohquaongoh9Nooz9vaThaeche@db:27017
+use smartsleep
+db.clients.insert({clientId: "android", clientSecret: "<INSERT CLIENT SECRET FOR ANDROID>", authorized: true})
+db.clients.insert({clientId: "ios", clientSecret: "<INSERT CLIENT SECRET FOR IOS>", authorized: true})
+db.users.insert({emailAddress: "ios1@example.test", password: "ios1", attendeeCode: "ios1"})
+db.users.insert({emailAddress: "ios2@example.test", password: "ios2", attendeeCode: "ios2"})
+db.users.insert({emailAddress: "android1@example.test", password: "android1", attendeeCode: "android1"})
+db.users.insert({emailAddress: "android2@example.test", password: "android2", attendeeCode: "android2"})
+exit
+exit
+```
+
+To access the services from outside, we need to point incoming https traffic to staging server domain, for example, `smartsleep.example.test`, to proxy service running in docker on port 18080.  This can be done using nginx reverse proxy with the following settings:
+```
+upstream smartsleep {
+  server 127.0.0.1:18080;
+}
+server {
+  listen 80;
+  server_name smartsleep.example.test;
+  location / {
+    return 301 https://$server_name$request_uri;
+  }
+}
+server {
+  server_name smartsleep.example.test;
+  access_log /var/log/nginx/smartsleep.example.test-access.log;
+  error_log /var/log/nginx/smartsleep.example.test-error.log;
+  location / {
+    proxy_pass         http://smartsleep;
+    proxy_redirect     off;
+    proxy_set_header   Host             $host;
+    proxy_set_header   X-Real-IP        $remote_addr;
+    proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
+    proxy_set_header   X-Forwarded-Proto $scheme;
+  }
+  listen 443 ssl; # managed by Certbot
+  ssl_certificate /etc/letsencrypt/live/example.test/fullchain.pem; # managed by Certbot
+  ssl_certificate_key /etc/letsencrypt/live/example.test/privkey.pem; # managed by Certbot
+  include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+```
+provided you have used letsencrypt to install https certificates.
+
+## Test limesurvey access
+If you want to test limesurvey access from desktop app, generate a token using the following:
+```
+docker exec -it smartsleep_auth.1.<press tab to autocomplete> bash
+LOG_LEVEL=info npx ts-node bin/auth-client.ts --clientId survey --clientSecret <INSERT CLIENT SECRET FOR SURVEY>
+exit
+```
+Copy the resulting token and paste it into desktop app script in `desktop/src/index.js` after `Bearer `.
+
+Also, you should create mysql user with privileges for limesurvey:
+```
+docker exec -it smartsleep_sql.1.<autocomplete> bash
+mysql -u root -p # and then ender root password from compose file
+CREATE USER 'survey' IDENTIFIED BY 'Eingee7ooco7jaewoh5Suuy7sha3thae';
+GRANT ALL PRIVILEGES ON *.* TO 'survey' IDENTIFIED BY 'Eingee7ooco7jaewoh5Suuy7sha3thae';
+exit
+exit
+```
+
+Now you can run `npm start` from `desktop` and follow the steps on screen to activate limesurvey.
+
+## Test android app
+
+Create the following file:
+```
+app/src/main/java/dk/ku/sund/smartsleep/manager/ClientSecret.kt
+```
+You can use the following template:
+```
+app/src/main/java/dk/ku/sund/smartsleep/manager/ClientSecret.kt.sample
+```
+
+Build .apk package, install it on android and use attendeeCode which you inserted into the database before.
+
+## Test ios app
+
+Create the following file:
+```
+SmartSleep/Services/ClientSecret.swift
+```
+You can use the following template:
+```
+SmartSleep/Services/ClientSecret.swift.sample
+```
+
+Also download from your firebase dashboard a .plist file and save it into:
+```
+SmartSleep/GoogleService-Info.plist
+```
+
+Install app on iphone and use attendeeCode which you inserted into the database before.
+
+## Test mongodb access.
+
+Make sure port 27017 is opened to incoming connections.  This is needed to access mongodb from desktop client.
+
+Download client from https://docs.mongodb.com/compass/master/install/
+Start it, connect to the server and browse the database.
