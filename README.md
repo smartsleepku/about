@@ -46,7 +46,7 @@ The backend is composed of multiple sub-components.
  - [Notification](https://github.com/smartsleep/notify) service
  - [Survey](https://github.com/smartsleep/limesurvey) service
  - [Authenticating](https://github.com/smartsleep/proxy) proxy
- 
+
 ![Server layout](https://github.com/smartsleep/about/raw/master/smartsleep-server-layout.png "Server layout")
 
 #### Authentication Proxy
@@ -118,4 +118,98 @@ To build and run the backend services locally, simply clone the services project
 
 ```
 docker-compose up
+```
+
+# Notes on setting up development environment for Smartsleep
+
+Install docker, docker-compose.
+
+Clone repositories:
+```
+git clone git@github.com:smartsleep/services.git
+git clone git@github.com:smartsleep/android.git
+cd services
+git submodule update --init --recursive
+git submodule update --remote
+```
+
+Install prerequisites:
+```
+sudo apt install gradle
+```
+
+Add `services/auth/.env` file:
+```
+APP_ID=auth
+PORT=3000
+LOG_LEVEL=warn
+REQUEST_LIMIT=100kb
+SESSION_SECRET=eXeilu8AiPoQuae7aeth8jaiZ7phugh9Chain5mie0zaebiemeebei0iegoong3S # use some secret (not sure how that session secret is used)
+
+#Swagger
+SWAGGER_API_SPEC=/spec
+```
+
+Now run `docker-compose up` from `services` directory to start backend servers.
+
+When servers are running, you need to populate the databases with appropriate data so local client can communicate with local backend:
+```
+docker exec -it services_db_1 bash
+mongo mongodb://root:oJuwu7Tohquaongoh9Nooz9vaThaeche@db:27017
+use smartsleep
+db.clients.insert({clientId: "android", clientSecret: "jiejov6ohn3iexiig5EifiLaiyai5eizoo4avaeQueesohqu5Iezohg7ooyohc1o", authorized: true})
+db.clients.insert({clientId: "ios", clientSecret: "jiejov6ohn3iexiig5EifiLaiyai5eizoo4avaeQueesohqu5Iezohg7ooyohc1o", authorized: true})
+db.clients.insert({clientId: "survey", clientSecret: "jiejov6ohn3iexiig5EifiLaiyai5eizoo4avaeQueesohqu5Iezohg7ooyohc1o", authorized: true})
+db.users.insert({emailAddress: "test@example.test", password: "test", attendeeCode: "5"})
+db.users.insert({emailAddress: "ios1@example.test", password: "ios1", attendeeCode: "ios1"})
+db.users.insert({emailAddress: "android1@example.test", password: "android1", attendeeCode: "android1"})
+db.users.insert({emailAddress: "android2@example.test", password: "android2", attendeeCode: "android2"})
+exit
+exit
+```
+
+`clientSecret` in the snippet above should correspond to the `CLIENT_SECRET` in the android and ios files explained below.
+
+For the android and ios clients, do the following:
+Add `android/app/src/main/java/dk/ku/sund/smartsleep/manager/ClientSecret.kt` file:
+```
+package dk.ku.sund.smartsleep.manager
+
+import com.github.kittinunf.fuel.core.FuelManager
+
+val CLIENT_SECRET = "jiejov6ohn3iexiig5EifiLaiyai5eizoo4avaeQueesohqu5Iezohg7ooyohc1o"
+val ADMIN_CREDENTIALS = "Eiphuthe4saiPiu7imoweitaek5caey9ohhohN0uh9aegh5pot7Uer2aeToXie2u"
+
+fun configure() {
+    //FuelManager.instance.basePath = "https://apismartsleep.sund.ku.dk"
+    FuelManager.instance.basePath = "http://10.0.2.2:18080"
+}
+```
+
+And for ios the following file:
+```
+import Foundation
+
+// Admin password
+let AdminCreds = "Eiphuthe4saiPiu7imoweitaek5caey9ohhohN0uh9aegh5pot7Uer2aeToXie2u"
+
+
+// Production
+let ClientSecret = "jiejov6ohn3iexiig5EifiLaiyai5eizoo4avaeQueesohqu5Iezohg7ooyohc1o"
+let baseUrl = "http://localhost:18080"
+```
+
+Values for `CLIENT_SECRET` and `ADMIN_CREDENTIALS` in the file above could be anything for development, but it should equal to the corresponding values in the databases.
+
+The url http://10.0.2.2:18080 is host system address for proxy service, as seen from android emulator in android studio.
+Same goes for ios, but host IP address is just localhost.
+
+Now you can use android studio to run emulator and test code.  After starting the app in emulator, enter the code `5`, and then e-mail `test@example.test`.
+
+## Updates in code
+
+When you update one of the submodules, or docker-compose file, run the following:
+```
+git submodule update --remote
+docker-compose build
 ```
