@@ -222,6 +222,7 @@ First, clone and checkout backend repositories on the server:
 git clone git@github.com:smartsleepku/services.git
 cd services
 git submodule update --init --recursive
+mkdir mongodata
 ```
 
 ### Configure activity
@@ -233,6 +234,8 @@ You can use the following file as a template:
 ```
 activity/secrets/database-production.properties.sample
 ```
+
+Make sure there are no more than 1 endline characters in the end of the .properties file.  Otherwise database config won't be loaded.
 
 ### Configure auth
 Create and edit the following files:
