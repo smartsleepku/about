@@ -295,6 +295,7 @@ db.clients.insert({clientId: "android", clientSecret: "<INSERT CLIENT SECRET FOR
 db.clients.insert({clientId: "ios", clientSecret: "<INSERT CLIENT SECRET FOR IOS>", authorized: true})
 db.users.insert({emailAddress: "ios1@example.test", password: "ios1", attendeeCode: "ios1"})
 db.users.insert({emailAddress: "ios2@example.test", password: "ios2", attendeeCode: "ios2"})
+db.users.insert({emailAddress: "ios3@example.test", password: "ios3", attendeeCode: "ios3"})
 db.users.insert({emailAddress: "android1@example.test", password: "android1", attendeeCode: "android1"})
 db.users.insert({emailAddress: "android2@example.test", password: "android2", attendeeCode: "android2"})
 exit
