@@ -393,3 +393,107 @@ Make sure port 27017 is opened to incoming connections.  This is needed to acces
 
 Download client from https://docs.mongodb.com/compass/master/install/
 Start it, connect to the server and browse the database.
+
+# Production deployment
+
+## Backups
+### Backup mysql database
+`mysqldump -u root -p -A > ./backup-<date>.sql` and type root password (supply corresponding date)
+
+### Backup mongodb
+Run the following (change `path/to/backups` to the corresponding path)
+```
+docker run -it --rm -v /path/to/backups:/path/to/backups mongo:xenial bash
+mongodump --host smartsleepdb.sund.root.ku.dk --username admin --password <admin-password> --out path/to/backups/mongo-backup-<date>
+exit
+```
+
+## Prepare repositories
+
+```
+git clone git@github.com:smartsleepku/services.git
+cd services
+git submodule update --init --recursive
+```
+
+### Configure activity
+Create and edit the following file:
+```
+activity/secrets/database-production.properties
+```
+You can use the following file as a template:
+```
+activity/secrets/database-production.properties.sample
+```
+
+Make sure there are no more than 1 endline characters in the end of the .properties file.  Otherwise database config won't be loaded.
+
+### Configure auth
+Create and edit the following files:
+```
+auth/.env
+auth/config/production.json
+```
+You can use the following files as templates:
+```
+auth/.env.sample
+auth/config/production.json.sample
+```
+
+### Configure survey
+Create the following file:
+```
+secrets/config-production.php
+```
+You can use the following file as a template:
+```
+secrets/config-production.php.sample
+```
+
+### Configure firebase
+Download firebase admin sdk configuration from firebase dashboard:
+```
+secrets/firebase-adminsdk.json
+```
+
+## Set up server
+Run the following commands from the services directory:
+```
+docker node ls # check that it worked
+/usr/local/bin/docker-compose -f docker-compose.production.yml build # this rebuilds local docker images
+```
+
+If services are running, stop them before re-deploying:
+```
+docker stack rm smartsleep
+```
+and wait 10 seconds (to make sure docker removed old network).  Then deploy services:
+```
+docker stack deploy -c docker-compose.production.yml smartsleep # this starts all services
+docker service ls # see that services are running
+```
+
+You can use the following commands to check services:
+```
+docker service ps <service> # check particular service
+docker logs <service> # check service logs (you can use autocompletion)
+```
+
+To stop services, run:
+```
+docker stack rm smartsleep
+```
+
+## Re-init survey
+Go to `desktop` repository.  If it's not configured yet, do the following:
+```
+docker exec -it smartsleep_auth.1.<press tab to autocomplete> bash
+LOG_LEVEL=info npx ts-node bin/auth-client.ts --clientId survey --clientSecret <INSERT CLIENT SECRET FOR SURVEY>
+exit
+```
+Copy the resulting token and paste it into desktop app script in `desktop/src/index.js` after `Bearer `.
+Then start the application:
+```
+npm start
+```
+and use respective settings from `services/secrets/config-production.php` to re-init the survey.
