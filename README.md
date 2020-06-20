@@ -150,6 +150,42 @@ SESSION_SECRET=eXeilu8AiPoQuae7aeth8jaiZ7phugh9Chain5mie0zaebiemeebei0iegoong3S 
 SWAGGER_API_SPEC=/spec
 ```
 
+Create the following file:
+```
+stack.env
+```
+You can use the following file as a template:
+```
+stack.env.sample
+```
+
+Create ssreports directory:
+```
+mkdir <base_dir>/ssreports
+```
+Create the following file:
+```
+report-builder/config.ini
+```
+You can use the following file as a template:
+```
+report-builder/config.ini.sample
+```
+
+Create the following file:
+```
+secrets/admin-config.ini
+```
+You can use the following file as a template:
+```
+secrets/admin-config.ini.sample
+```
+
+And load environment variables before running docker compose commands:
+```
+source stack.env
+```
+
 Now run `docker-compose up` from `services` directory to start backend servers.
 
 When servers are running, you need to populate the databases with appropriate data so local client can communicate with local backend:
@@ -265,11 +301,55 @@ Download firebase admin sdk configuration from firebase dashboard:
 secrets/firebase-adminsdk.json
 ```
 
+## Configure environment
+Create the following file:
+```
+stack.env
+```
+You can use the following file as a template:
+```
+stack.env.sample
+```
+
+## Configure report and admin servers
+
+```
+mkdir <base_dir>/ssreports
+```
+Create the following file:
+```
+report-builder/config.ini
+```
+You can use the following file as a template:
+```
+report-builder/config.ini.sample
+```
+
+And add docker secret from it:
+```
+sudo docker secret create db_config report-builder/config.ini
+```
+
+Create the following file:
+```
+secrets/admin-config.ini
+```
+You can use the following file as a template:
+```
+secrets/admin-config.ini.sample
+```
+
+And add docker secret from it:
+```
+sudo docker secret create admin_config secrets/admin-config.ini
+```
+
 ## Set up server
 Run the following commands from the services directory:
 ```
 docker swarm init # initialize the computer as swarm control node
 docker node ls # check that it worked
+source stack.env
 docker-compose -f docker-compose.staging-new.yml build # this rebuilds local docker images
 docker stack deploy -c docker-compose.staging-new.yml smartsleep # this starts all services
 docker service ls # see that services are running
@@ -293,6 +373,7 @@ mongo mongodb://root:oJuwu7Tohquaongoh9Nooz9vaThaeche@db:27017
 use smartsleep
 db.clients.insert({clientId: "android", clientSecret: "<INSERT CLIENT SECRET FOR ANDROID>", authorized: true})
 db.clients.insert({clientId: "ios", clientSecret: "<INSERT CLIENT SECRET FOR IOS>", authorized: true})
+db.clients.insert({clientId: "survey", clientSecret: "<INSERT CLIENT SECRET FOR SURVEY>", authorized: true})
 db.users.insert({emailAddress: "ios1@example.test", password: "ios1", attendeeCode: "ios1"})
 db.users.insert({emailAddress: "ios2@example.test", password: "ios2", attendeeCode: "ios2"})
 db.users.insert({emailAddress: "ios3@example.test", password: "ios3", attendeeCode: "ios3"})
@@ -354,7 +435,12 @@ exit
 exit
 ```
 
-Now you can run `npm start` from `desktop` and follow the steps on screen to activate limesurvey.
+Now you can run `npm start` from `desktop` and follow the steps on screen to activate limesurvey:
+* database location: sql
+* database user: survey
+* database password: <password for sql user>
+* database name: smartsleep
+* table prefix: lime_
 
 ## Test android app
 
@@ -454,6 +540,19 @@ secrets/config-production.php.sample
 Download firebase admin sdk configuration from firebase dashboard:
 ```
 secrets/firebase-adminsdk.json
+```
+
+## Configure report servers
+```
+mkdir <base_dir>/ssreports
+```
+Create the following file:
+```
+sudo docker secret create db_config report-builder/config.ini
+```
+You can use the following file as a template:
+```
+report-builder/config.ini.sample
 ```
 
 ## Set up server
