@@ -162,6 +162,8 @@ stack.env.sample
 Create ssreports directory:
 ```
 mkdir <base_dir>/ssreports
+mkdir <base_dir>/ssreports/new_users
+mkdir <base_dir>/ssreports/weekly
 ```
 Create the following file:
 ```
@@ -315,6 +317,8 @@ stack.env.sample
 
 ```
 mkdir <base_dir>/ssreports
+mkdir <base_dir>/ssreports/new_users
+mkdir <base_dir>/ssreports/weekly
 ```
 Create the following file:
 ```
@@ -512,6 +516,11 @@ You can use the following file as a template:
 activity/secrets/database-production.properties.sample
 ```
 
+And add docker secret from it:
+```
+sudo docker secret create activitydb activity/secrets/database-production.properties
+```
+
 Make sure there are no more than 1 endline characters in the end of the .properties file.  Otherwise database config won't be loaded.
 
 ### Configure auth
@@ -536,29 +545,72 @@ You can use the following file as a template:
 secrets/config-production.php.sample
 ```
 
+And add docker secret from it:
+```
+sudo docker secret create limeconfig secrets/config-production.php
+```
+
 ### Configure firebase
 Download firebase admin sdk configuration from firebase dashboard:
 ```
 secrets/firebase-adminsdk.json
 ```
 
-## Configure report servers
+And add docker secret from it:
+```
+sudo docker secret create fbadminsdk secrets/firebase-adminsdk.json
+```
+
+## Configure environment
+Create the following file:
+```
+stack.env
+```
+You can use the following file as a template:
+```
+stack.env.sample
+```
+
+## Configure report and admin servers
+
 ```
 mkdir <base_dir>/ssreports
+mkdir <base_dir>/ssreports/new_users
+mkdir <base_dir>/ssreports/weekly
 ```
 Create the following file:
 ```
-sudo docker secret create db_config report-builder/config.ini
+report-builder/config.ini
 ```
 You can use the following file as a template:
 ```
 report-builder/config.ini.sample
 ```
 
+And add docker secret from it:
+```
+sudo docker secret create db_config report-builder/config.ini
+```
+
+Create the following file:
+```
+secrets/admin-config.ini
+```
+You can use the following file as a template:
+```
+secrets/admin-config.ini.sample
+```
+
+And add docker secret from it:
+```
+sudo docker secret create admin_config secrets/admin-config.ini
+```
+
 ## Set up server
 Run the following commands from the services directory:
 ```
 docker node ls # check that it worked
+source stack.env
 /usr/local/bin/docker-compose -f docker-compose.production.yml build # this rebuilds local docker images
 ```
 
